@@ -1,0 +1,3 @@
+      INTEGER MAXRNG
+      PARAMETER (MAXRNG=100)
+

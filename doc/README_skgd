@@ -1,0 +1,110 @@
+
+2020/08/24    K. Okumura
+
+
+* Preface
+
+skdetsim for SK-Gd with Geant4 extension (skdetsim_gd) is implemented 
+from r29079 (and later) in skdetsim trunk repository. 
+
+Only works on Kamioka sukap machine and with Geant4.10.03.p01
+
+
+
+* What's implemented
+
+  - Use G4 function for neutron-Gd capture (mainly implemented by Ka Ming)
+
+  - neutron interactio in Gd water implemented by Ashida san, Harada san.
+    (See gtneut.F)
+
+  - neutron emission by pi-/mu- capture with Oxygen implemented by 
+    Akutsu san. See gtmuon.F and sgnuceff.F.
+
+  - Add after-pulse simulation implemented by Nakajima san, Harada san.
+    See dsres_multi.F.  This is disabled in default. 
+
+
+* Compile
+
+ Use shell script to compile skdetsim_gd 
+
+  % ./make_gd.csh clean
+  % ./make_gd.csh 
+
+ The compiled binary is "skdetsim" (or skdetsim_middle, skdetsim_high).
+
+
+
+* Flags in card file
+
+C  Enable Geant4 extension 
+C  Also G4 neutron-water interaction, mu-/pi- capture are enabled
+SKCNTL-USEG4 1         
+
+C  Set Gd concentration. Below example is 0.02%
+SKCNTL-GDCONC 0.02
+
+C  enable neutron-Gd capture, neutron-Gd interaction (need to enable SKCNTL-USEG4 first)
+SKCNTL-GDWTR 1
+
+C  enable after-pulse simulation (default is off)
+DS-AFTERPULSE 1
+
+C  Seed for GEANT4 randome number generator
+SKCNTL-G4INITIRAND 1234
+
+C Choose the Gd(n,gamma) model. Below example is Geant4 Default model
+C SKCNTL-GDMODEL (integer) :       0  Geant4 Default model.
+C                                  1  GLG4Sim model.
+C                                  2  ggarnet model.
+C                                  3  ANNRI_Gd model.
+C                                  4  Geant4 Photo-evaporation model.
+SKCNTL-GDMODEL 0
+
+* Run 
+
+  See skdetsim_gd.sh for more detail.
+
+  % ./skdetsim_gd.sh  ...
+
+
+
+
+
+* Modified/Added files
+
+M       GNUmakefile
+A       architecture.gmk    (for Geant4 configuration)
+A       binmake.gmk         (for Geant4 configuration)
+A       common.gmk          (for Geant4 configuration)
+M       cntlcard.F
+M       dscard.F
+M       dsdigi_sk4.F
+M       dsparm.h
+M       dsres_multi.F
+M       gcalor_unix.F
+A       gdneutron.h
+M       grun.F
+M       gthadr.F
+M       gtmuon.F
+M       gtneut.F
+M       sgnuceff.F
+M       skdetsim_parm.h
+A       include/*          (Geant4 include files)
+A       src/*              (Geant4 C++ files)
+A       make_gd.sh 
+A       skdetsim_gd.sh 
+
+
+
+
+* See also
+
+README_skgd_kaming
+  README file by Ka Ming for initial skdetsim_gd program 
+
+README_skgd_harada
+  README file by Harada san according to his modification
+
+

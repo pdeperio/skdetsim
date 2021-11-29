@@ -1,0 +1,218 @@
+Release note of SKDETSIM version 7.75
+January 20th, 2009 
+
+
+Dear Super-Kamiokande collaborators,
+
+ The SKDETSIM was upgraded to support SK-IV.
+The following is a release note of SKDETSIM version 7.75.
+
+A. How to get SKDETSIM
+
+    CVS was used to control version of SKDETSIM source codes.
+    Now SKDETSIM is managed under Subversion (svn) which is commonly
+    used for SK projects. 
+    See http://subversion.tigris.org/, for more information on svn.
+
+    To compile/execute skdetsim, the SK off-line (SKOFL) library is needed.
+    If you haven't installed it, please install it first.
+    See https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skofl/trunk/00README,
+    for more information on the SKOFL library.
+
+    The latest release version is tagged as skdetsim-v7p75.
+    The current development version is located in trunk.
+    To get them, please do the following commands.
+
+ (1) To get the latest release version:
+
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/tags/skdetsim-v7p75 skdetsim
+
+ (2) To get the current development version:
+
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/trunk skdetsim
+
+
+B. How to compile SKDETSIM
+
+  I. The SKDETSIM executable is compiled via GNUmakefile.
+     Please do the following:
+
+     cd skdetsim
+     source $SKOFL_ROOT/env.csh
+     make
+
+    Or, please do the following on sukap machines in Kamioka:
+
+        cd skdetsim
+        source /skofl/env.csh
+        make
+
+    Then user will get an executable file, skdetsim.
+
+ II. SKDETISM for higher energy events
+
+    SKDETSIM is written to use smaller size of the computer memory.
+    If a user wants to generate high energy events (eg. a several 100GeV e)
+    with TRACKPHOTON = 1 or 3, one needs to change size of internal array,
+    otherwise the program will crash with an error 'ZFATAL'.
+
+    To compile the executable with the larger array size,
+    please do the following:
+
+        setenv MIDDLE 1 ( setenv HIGH 1   )
+        make clean
+        make
+        unsetenv MIDDLE ( unsetenv HIGH   )
+
+    Then user will get an executable file, skdetsim_middle (skdetsim_high).
+
+    The difference between these executable files is only the size
+    of the internal array which is used for ZBS system.
+    (Technically, NPSTOREX defined in sginit.F). 
+    Everything eles is completely the same as skdetsim.
+
+    We recommend using skdetsim_high for atmoshperic neutrino events
+    with TRACKPHOTON=1 or 3,  and skdetsim_middle for middle energy events
+    (lower than 100GeV) with TRACKPHOTON=1 or 3.
+
+    If TRACKPHOTON=2 or 4 is set, skdetsim doesn't need a large amount of memory.
+
+C. How to use SKDETSIM
+
+     An example shell script, skdetsim.sh, for running the program, and
+     several example input cards have been included in the module.
+     Example cards are listed in subsectin E-IV.
+
+     You can generate events by:
+
+      skdetsim.sh <control card file name> <output ZBS file name>
+
+     Or if you use an input kinematics files,
+
+      skdetsim.sh <control card file name> <output ZBS file name> <input ZBS file name>
+
+     If the user wants to use skdetsim_middle (skdetsim_high), one should use 
+     skdetsim_middle.sh (skdetsim_high.sh). 
+
+
+D. How to read SK-IV MC events.
+
+    If a user reads SK-IV Monte Carlo events, one needs to use latest version of 
+    the "skrd" module in the SKOFL library. It supports SK_GEOMETRY=4 MC events.
+    If one's analysis programs were compiled with an older version of skread,
+    it should be updated.
+
+   
+E. Changes from latest SKDETSIM
+
+ I. Tracking and counting methods of photons. Reflection of photons on ID PMT.
+
+ (1) New simulation methods of photon reflection on ID PMTs are supported.
+
+     A detailed description of the method was explained at the 2008 Nov.
+     collaboration meeting by B.Yang.
+
+     The new reflection method is applied by setting the variable REFLECTIONTUNE = 3
+     in the controlling card. 
+
+ (2) New tracking/counting methods are supported.
+
+     In the previous version of SKDETSIM, Two different methods were supported:
+
+      (1) Tracking all photons. And all photon arrival times on ID PMTs are stored.
+         (TRACKPHOTON=1, used in LowE analyses.)
+         
+      (2) Tracking reduced number of photons. Photons are reduced by applying quantum
+          efficiency before tracking to reduce CPU time. Only the number of photons in
+          an ADC gate and arrival time of the fastest photon are stored.
+         (TRACKPHOTON=2, used in ATMPD analyses.)
+
+     New additional methods are supported now:
+      (3) tracking reduced number of photons. Photons are reduced by applying
+          (quantum efficiency)/(absorption on PMT) before tracking.
+          All photon arrival times on PMTs are stored to determine PMT hit timing
+          and the number of observed photons. Multi-hit behavior of the PMTs is taken into account.
+          This method is used by setting TRACKPHOTON = 3.
+
+      (4) Same tracking methods as (3), but photon counting method is similar
+          to (2) to save computer memory. Multi-hit behavior of the PMTs is taken into account.
+          This method will is used by setting TRACKPHOTON = 4.
+
+ II.  SK-IV simulation
+
+ (1) SK-IV electronics are simulated. Data structure is also simulated.
+
+     (a) Wider time window (-5usec,35usec) is simulated.
+         One event is composed of a series of 17.07 usec width data block,
+         like the online data.
+     (b) The bank structure of SK-IV data is simulated in SK-IV MC.
+         The output of the MC is TQZ, TQAZ, TQREAL, TQAREAL bank.
+     (c) Digitization of time and charge by QBEE is simulated.
+     (d) Multi-hit behavior of the PMTs is simulated. 
+         Photon-counting methods are implemented for multi-hit of PMTs.
+         The user needs to set TRACKPHOTON = 3 or 4 in the controlling card.
+     (e) The measured SK-IV 1photoelectron (p.e.) distribution is included.
+
+ (2) Software trigger is applied to the events in SKDETSIM.
+     The software trigger is same as for real data prepared by online/offline experts.
+     The newest software trigger will be compiled from the SKOFL library.
+
+ III. Control flags
+
+     SKDETSIM works with any combination of the control flags.
+     But to avoid combinations that are improper for physics analyses, 
+     only recommended combinations of the flags are allowed in the program.
+     If you need to use other combinations, please edit cntlcard.F by yourself.
+
+     The allowed combinations are below:
+
+     (1) SK-I, SK-II:
+
+             TRACKPHOTON  | REFLECTIONTUNE | WATERTUNE | DSTUNE
+      LowE        1       |        1       |     1     |   1
+      ATMPD       2       |        2       |     2     |   2
+
+     (2) SK-III:
+             TRACKPHOTON  | REFLECTIONTUNE | WATERTUNE | DSTUNE
+      LowE        3       |        3       |     3     |   3
+      ATMPD       2       |        2       |     2     |   2
+
+     (3) SK-IV:
+             TRACKPHOTON  | REFLECTIONTUNE | WATERTUNE | DSTUNE
+      LowE        3       |        3       |     3     |   3
+      ATMPD       3       |        3       |  2 .or.3  |   2
+ 
+
+     If the user sets the proper combination of these flags, the new version of SKDETSIM 
+     will reproduce exactly the results of simulations for SK-I, SK-II and SK-III 
+     from previous versions of SKDETSIM.
+
+  IV. Example cards
+
+      We prepared the following sample cards:
+
+              LowE                 |     ATMPD
+      SK-1  le_sk1_example.card    |   sk1_odtune.card
+      SK-2  le_sk2_example.card    |   sk2_odtune.card
+      SK-3  le_sk3_example.card    |   sk3_odtune.card
+      SK-4  le_sk4_example.card    |   sk4_odtune.card
+
+      The control flags are properly set in them.
+
+  V.  Output format
+
+      The output of SKDETSIM is in ZBS format. It is same as previous
+      versions of SKDETSIM.  Preliminary functions to output SKROOT files are
+      also implemented. If you set OUTPUTTYPE to 1 and  FILEFORMAT to 1
+     (old lowE output type) in the control card, the output file will be in root format.
+      An example card is sk4_example_root.card.
+ 
+
+
+ If you have any questions or comments, plese send them to
+
+   sk2mc@suketto.icrr.u-tokyo.ac.jp
+
+ Best Regards,
+  SKDETSIM group
+

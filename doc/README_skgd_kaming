@@ -1,0 +1,67 @@
+
+*** Please note that this document is obsolute. ****
+
+
+----------------------------------------------------------------
+README
+----------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------
+* List Of Variable in card file
+
+1. SKCNTL-USEG4 (boolean)   : you should select 1 if you want to use geant4 function and cross-section 
+
+2. SKCNTL-GDWTR (boolean)   : you should select 1 if you want to use Gd-dissolved water 
+
+3. SKCNTL-GDMODEL (integer) : you can select 4 Gd(n,gamma) model
+                                  0  Geant4 Default model.
+                                  1  GLG4Sim model.
+                                  2  ggarnet model.
+                                  3  ANNRI_Gd model.
+
+4. SKCNTL-GDCONC (float)    : you can tune the concentration of Gd2(SO4)3 * 15H2O
+------------------------------------------------------------------------------------------------
+
+
+List of changes:
+1. Modify GNUmakefile and add architecture.gmk, binmake.gmk, common.gmk for Geant4 compilation. To compile:
+   % source /usr/local/sklib_gcc4.8.5/cshenv_gcc4.8.5_skofl_19a+atmpd_19a # need NEUT 5.4.0
+   % setenv NEUTRON 1
+   % ./make.csh
+2. Add gdneutron.h to store Gd-related common block
+3. Modify cntlcard.F and skdetsim_parm.h to add a on/off switch for Gd-simulation
+4. Modifiy grun.F to initialize/finalize Geant4
+5. SUBROUTINE CALSIG in gcalor_unix.F: add variable g3Sig to store water cross-section value from MICAP
+6. Many changes in gtneut.F:
+   - Activate Gd-simulation if satisfy several conditions 
+   - Calculate Gd X-sec and modify step size
+   - Determine whether water or Gd-interaction happens 
+   - If Gd-interaction happens, call GEANT4 and process the secondaries
+7. All GEANT4 codes stored in src/ and include/
+   - subCPP.cc: as a Fortran-C++ interface
+   - userInterface2: main GEANT4 class to get Gd X-sec and secondaries
+   - myG4NeutronHPorL{Capture/Elastic/Inelastic}:
+     customized interaction model to only load Gd-channel
+   - SKGdNeutronHPCaptureFS, SKGdCaptureGammas/GdNeutronHPCaptureFS, GdCaptureGammas:
+     alternative gamma models that can be used (set in myG4NeutronHPorLCapture.cc)
+8. Run by ./run.sh
+   - set SKCNTL-GDWTR 1 in card for Gd-simulation
+
+
+
+----------------------------------------------------------------
+2017-05-12
+After-pulse simulation is added by Y.Nakajima.
+Enale with "DS-AFTERPULSE 1"
+
+Gd-water transparency is added in water-tune options.
+See "SKCNTL-WATERTUNE" in sk4_odtune.card for details.
+----------------------------------------------------------------
+
+----------------------------------------------------------------
+2017-05-16
+Gd-gamma model from J-PARC measurement is added.
+To use this model, go to src/myG4NeutronHPorLCapture.cc and use 
+"SKGdNeutronHPCaptureFS * theFS = new SKGdNeutronHPCaptureFS;" instead of 
+"G4NeutronHPCaptureFS * theFS = new G4NeutronHPCaptureFS;"
+----------------------------------------------------------------

@@ -1,0 +1,136 @@
+#define SK1LE
+LIBALIAS = skdetsim
+APVER_MAJOR = 7
+APVER_MINOR = 4
+LEVER       = 7
+VER = $(LEVER).$(APVER_MAJOR)$(APVER_MINOR)
+EXEVER = $(LEVER).$(APVER_MAJOR)$(APVER_MINOR)
+
+
+FORTRANDEFINES +=  -DDETAIL_2NDARY -DREDUCED_PHOTON -DTUNED_1PE -DSKDETSIM_VERSION=$(VER) -DAPDETSIM_VERSION=$(APVER_MAJOR).$(APVER_MINOR)# -DFADC
+
+LIBNAME = $(LIBALIAS)_$(VER)
+
+APLIB =  $(MACHINE)/libskdetsim_$(VER).a -lmon -lskrd -lgeom -lzbs -llibrary  -liolib -lsklib -liolib #-lfadc
+
+LELIB= -lwtlib
+
+FJTLIB = -L/opt/FSUNrdass/lib -lrfa
+
+XCOMM ------------------------------------------------------
+XCOMM Define Object Files
+XCOMM ------------------------------------------------------
+
+SGO =	sgffin.o sggeom.o sginit.o sgcard.o sgabsc.o sgpmt.o  sgpmta.o \
+        sgbst.o  sggvcd.o sgabsc.o sgpich.o sgpiel.o sgpiie.o \
+        sgpint.o sgpist.o sgtyvk.o sgtyvk_odsegm.o sgtyvk_util.o \
+	sgrefpmt.o skdonuts.o skdonuts_sk1.o sggvus.o \
+        sggtxt.o sggeom_sk1.o sggeom_sk2.o sggeom_sk3.o cntlcard.o skidentify.o
+
+DETO =	chersg.o pmtqesg.o rfpmsg.o wtrsg.o  wlngsg.o wsrtsg.o tyvksg.o \
+	drefsg.o effnsg.o refsg.o
+
+DSO =	ds.o dsnois.o dsinip.o dsres.o dstrig.o dsprsv.o dsbdel.o dsanti.o \
+        dscard.o dshigh.o dssubchk.o sktsig_le.o
+
+SEG =   seg.o seg_openf.o seg_closef.o 363tools.o seg_packprt.o
+
+OBJ =	vecbst.o rfbssg.o dsthr.o dsthr_sk3.o rndark.o skfakehd.o aprdcd.o \
+	skgamma.o sgmies.o wmiesg.o sgcardbnk.o  skmkmcver.o \
+	tunedat.o apdssbread.o apfill2nd.o apvcmpmk.o wsymscsg.o wasyscsg.o \
+	skmkapmcstop.o wtmisg.o gauss.o wabssg.o wraysg.o save_muon_path.o \
+	nemknebk.o do_validate.o sgpope_read.o sgbsdist.o popefrysg.o \
+#        fadcwrinit.o fadcrecord.o fadcwrite.o fadcdark.o
+
+GOBJ =  gukine.o gutrak.o gutrev.o gustep.o guphad.o guhadr.o guout.o \
+        grun.o gtckov.o ggckov.o gtmuon.o \
+        gpart.o gcalor_unix.o skrn1pe.o skrn1pe_sk2.o skrn1pe_sk3.o \
+	tr2fac.o trabs.o
+
+#ifdef SK1LE
+DOBJ =
+#else
+DOBJ =  gdrela.o gdrele_h2o.o gdrelm_h2o.o gdrelx_h2o.o gdrelp_h2o.o
+#endif
+
+
+ACR =	sgacredge.o sgacrefl.o sgacrefr.o sgacrylic.o sggapedge.o \
+	sgrefacr.o acrsg.o acrnsg.o cheracsg.o sgacrnor.o \
+        sggeom.o sgpmtnum_sk1.o sgpmtnum_sk2.o sgpmtnum_sk3.o\
+	sgpmt.o sgbst.o sktest.o sgholebst.o
+
+#ifdef UPMU
+FORTRANDEFINES += -DUPMU
+#endif
+
+#ifdef NICKEL
+FORTRANDEFINES += -DNICKEL
+#endif
+
+#ifdef LINAC
+FORTRANDEFINES += -DLINAC
+OBJLIN = array_locate_lin.o getreflect_lin.o lingeom1.o linsum2.o \
+	 refstn.o rfpip.o rfpip1_5.o rfpip1_7.o rfwin.o \
+	 rffra.o rfpip1.o rfpip1_6.o rfpip2.o
+#else
+OBJLIN =
+#endif
+
+ifeq ($(findstring sukap,$(HOST)), )
+   OBJRFA =
+else
+   D = /skam/obj
+   OBJRFA = $(D)/cfclos.o $(D)/cfget.o $(D)/cfopei.o $(D)/cfput.o
+endif
+
+OBJS = $(SGO) $(DETO) $(DSO) $(SEG) $(OBJ) $(ACR) $(OBJLIN)
+
+/* Add user-written subroutine SGGVUS here, if needed */
+MAINOBJ = skdetsim.o $(GOBJ) $(DOBJ) $(SEG) $(OBJ) $(ACR)
+MAINOBJ2 = make_lowmu.o $(GOBJ) $(DOBJ) $(SEG) $(OBJ) $(ACR)
+
+SUBOBJ  = apdssub.o
+
+XCOMM ------------------------------------------------------
+XCOMM Build Library
+XCOMM ------------------------------------------------------
+
+NormalLibraryTarget($(LIBNAME),$(OBJS))
+InstallLibrary($(LIBNAME),$(LIBDIR))
+InstallLibraryAlias($(LIBNAME),$(LIBALIAS),$(LIBDIR))
+FortranProgramTarget(skdetsim_$(EXEVER),$(MAINOBJ),,$(OBJRFA) $(APLIB) $(LELIB) $(FJTLIB) `cernlib geant321 graflib grafX11 packlib kernlib mathlib`,-lX11)
+FortranProgramTarget(skdetsim,$(MAINOBJ),,$(OBJRFA) $(APLIB) $(LELIB) $(FJTLIB) `cernlib geant321 graflib grafX11 packlib kernlib mathlib`,-lX11)
+FortranProgramTarget(make_lowmu,$(MAINOBJ2),,$(OBJRFA) $(APLIB) $(LELIB) $(FJTLIB) `cernlib geant321 graflib grafX11 packlib kernlib mathlib`,-lX11)
+InstallProgram(skdetsim_$(EXEVER),$(BINDIR))
+InstallProgram(skdetsim,$(BINDIR))
+InstallProgram(make_lowmu,$(BINDIR))
+InstallScript(skdetsim.sh,$(SCRIPTDIR))
+
+XCOMM ------------------------------------------------------
+XCOMM Compile Object
+XCOMM ------------------------------------------------------
+
+XCOMM ------------------------------------------------------
+XCOMM Install any include directories
+XCOMM ------------------------------------------------------
+
+InstallInclude(apcard.h,$(FORTRAN_INCDIR))
+InstallInclude(apmultmp.h,$(FORTRAN_INCDIR))
+InstallInclude(apscndprt.h,$(FORTRAN_INCDIR))
+InstallInclude(dsoffset.h,$(FORTRAN_INCDIR))
+InstallInclude(gt2pd.h,$(FORTRAN_INCDIR))
+InstallInclude(guref.h,$(FORTRAN_INCDIR))
+InstallInclude(gcbank.h,$(FORTRAN_INCDIR))
+InstallInclude(dsdata.h,$(FORTRAN_INCDIR))
+InstallInclude(dsparm.h,$(FORTRAN_INCDIR))
+InstallInclude(guanti.h,$(FORTRAN_INCDIR))
+InstallInclude(guflag.h,$(FORTRAN_INCDIR))
+InstallInclude(gumate.h,$(FORTRAN_INCDIR))
+InstallInclude(guhigh.h,$(FORTRAN_INCDIR))
+InstallInclude(gumed.h,$(FORTRAN_INCDIR))
+InstallInclude(gupht.h,$(FORTRAN_INCDIR))
+InstallInclude(guskge.h,$(FORTRAN_INCDIR))
+InstallInclude(guwtr.h,$(FORTRAN_INCDIR))
+InstallInclude(aptrkseg.h,$(FORTRAN_INCDIR))
+InstallInclude(nework.h,$(FORTRAN_INCDIR))
+InstallInclude(nesolact.h,$(FORTRAN_INCDIR))

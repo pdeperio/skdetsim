@@ -1,0 +1,51 @@
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C	How to remove the acrylic covers from skdetsim
+C       2003.04 Sterner
+C	skdetsim version 1.0
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+	Several tuning groups haved expressed an interest in removing the acrylic covers from skdetsim's SK-II mode.  Removing the acrylic to study the effect of the acrylic is relatively easy, but there are some tricky points.  Let me first metnion how to remove, then I will describe in more detail what the changes do.
+
+	Most of the acrylic case can be removed very simply.  In gustep.F,
+at the begining you can add the code:
+        if(NUMED.EQ.IMDACR) then !the medium is acrylic
+          NUMED=IMDWTI  !make the medium ID water
+        endif
+
+	Then remove the edge of the acrylic case.  In sgacredge.F, near line 199, change the treatment of the acrylic edge region:
+Modified code::
+      SUACR  = ZINTAC * 100./STEPAC
+      distacr=0.0      !new code
+      IF(SUACR.LT.distacr) THEN
+         return                 !absorb in acrylic
+      endif
+
+
+	Now let me discuss what these changes do in case you run into problems.  The majority of the acrylic case is modeled in skdetsim by a GEANT volume sphere.  The GEANT value NUMED stores the medium number.  This number is how GEANT knows that you are in water, acrylic, or a PMT.  Changes in this number in gustep.F let us decide if a particle has gone from ID water to the acrylic, for example.  Gustep is called everytime the volume changes.  So the first change you made renames all acrylic as ID water.  Thus skdetsim never knows that it is in acrylic.  All acrylic related properties (absorption, ckov photon generation, index of refraction) are replaced by ID water's.  All acrylic related processes (reflection and refraction) never get called.  Thus all acrylic volumes have been replaced by water.
+	However, this will not remove all acrylic cover related effects.  Special routines have been created for the edge of the acrylic covers.  This region is behind the new position of the black sheet, but in front of the old position of the black sheet.  The black sheet was moved (ZBLST=)6.07 cm inwards in SK-II for the FRP and acrylic covers.  The black sheet is the cutoff of all GEANT volumes in skdetsim (PMT, acrylic, water gap).  6.07 cm is a signifigant portion of the PMT surface that is behind the new black sheet level.  However light actually can reach this part of the PMT.  Please refer the the crude picture below:
+Picture of geometry:
+
+C                            _____________________________
+C                           /
+C                          /         ____________________
+C                         /         /    WATER GAP
+C               ID       /  ACR    /         ___________
+C                       /         /         /
+C                      /         /         /   PMT
+C                     /         /         /
+C         __ ________/_________/_________/
+C       bst   | hole/  acredge/  gapedge/
+C                  /         /         /
+C                 ----------/         /
+C            flange bottom           /
+C                                   /
+C            - - - - - - - - - - - -
+C               old bst level
+C
+
+	Light can travel thru the 'gapedge' and 'acredge' to reach the PMT.  Three special routines were created to treat these regions; sgholebst, sgacredge, and sggapedge.  Photon travel in this region is not handeled by normal GEANT style tracking.  Rather a rough approximation is made.
+	First note that as I have depicted above, the hole in the black sheet is actually bigger than the acrylic cover's radius at 6.07cm.  The routine sgholebst is called in gustep.F to see if a photon is hitting this region.  If a photon hits the "hole" or the "acredge" then sgacredge is called to treat them.  If a photon hits "gapedge" then sggapedge is called.
+	sgacredge and sggapedge are similar.  Both use the direction of the photon to make a simple geometrical calculation to see if the photon direction will intersect with the PMT.  See these routines for details.  
+	Important things to note are. There is no reflection, refraction, or scattering, thus photon cannot change direction and will never exit this region.  Also absorption in the acrylic is modeled, but absorption in water is not modeled. 
+	Thus the second change which I mentioned above merely removed the absorption in the acrylic and replaced the speed of light in acrylic with water.  Then treatment of the edge region will proceed as if only water was in this region.  Note however, that the edge of the FRP case at (ZACREDGE=) 4.0cm above the old black sheet still stops photons.  The FRP can also be removed, by setting ZACREDGE=0.0.  

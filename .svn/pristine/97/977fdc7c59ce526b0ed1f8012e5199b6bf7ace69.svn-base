@@ -1,0 +1,38 @@
+These are release notes for skdetsim v12.80.
+Ed Kearns Aug 8, 2011
+
+This version updates the SKDETSIM version number from 11.79 to 12.80.
+This is an update of both LEVER (11->12) and APVER_MAJOR (7->8) and
+APVER_MINOR (9->0, not 9->10). This AP version number system is
+strange, but several people were asked (Kameda, Okumura, Miura, Mine)
+and we did not find external software that would be affected. It may
+be that APVER_MAJOR ad APVER_MINOR is a left over from APDETSIM.
+
+As for code that does connect to APDETSIM, Mine-san did point out the
+use of APDSLIBVER by the energy scale group. This should be made the
+same numver in water.aveX. This version number is unrelated to the
+skdetsim version number. It is a simple hard-code inside skmkmcver.F
+(currently 5.2, 6.1, 7.2, 8.2 for SK 1-4). The commenting is confusing
+as it is called "Monte Carlo Version Number" and "apdetsim version".
+
+Changes to skdetsim that I am aware of:
+
+LOWE: time dependent water parameter (Yokozawa)
+
+ATMPD: pion charge exchange bugfix (Patrick)
+
+ATMPD: OD tuning
+
+ATMPD: photon yield factor (COREPMT)
+
+Take note that the previous skdetsim version had two tags:
+
+skdetsim-v11p79/
+skdetsim-v11p79_for_atmnu_apr10/
+
+If any other information related to this version (12.80) is
+discovered, please update these release notes.
+
+For instructions on use of SKDETSIM, please see previous release
+notes.
+

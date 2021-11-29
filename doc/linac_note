@@ -1,0 +1,23 @@
+A. sample tool for LINAC specified...
+   linac.sh, linac_example.card, Imakefile_linac
+
+B. How to compile
+
+   1. edit Imakefile, and add 
+             #define LINAC
+      on the first line of Imakefile. (The sample is Imakefile_linac)
+
+   2. imake_boot
+   3. gmake all skdetsim
+
+C. Be careful to your card
+
+   1. You MUST NOT set DS-DARK positive value or zero in your card,
+      but set -1 when you make Linac MC for general use.
+      If you want to use a special value for some purpose,
+      set DS-DARK the value which you want. It is valid.
+
+D. How to run
+
+   ./linac.sh linac_example.card tmp.dat 22034
+   (see the first part of linac.sh)

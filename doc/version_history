@@ -1,0 +1,114 @@
+VERSION HISTORY OF SKDETSIM
+
+DATE	CHANGE				COMMENT/FILE
+----	------				-----------------------------------
+VERSION 9-77  skdetsim-v9p77  :;:   DATE CREATED:09/06/12
+         SK-III LOWE for the collaboration meeting at June in 2009
+
+VERSION 8-77  skdetsim-v8p77  :;:   DATE CREATED:09/05/09
+         Serious bug was fixed by Hayato-san
+
+VERSION 8-76  skdetsim-v8p76  :;:   DATE CREATED:01/05/09
+         Several modifications and tunings were applied in this version.
+         Tag for bookkeeping.
+
+VERSION 7-75  skdetsim-v7p75  :;:   DATE CREATED:20/01/09
+         First version for SK-IV
+
+VERSION 7-74  skdetsim-v7p74  :;:   DATE CREATED:25/12/08
+         Same as VERSION 6-73, but GNUmakefile is available.
+         this version is start of subversion.
+
+VERSION 6-73  skdetsim-v6p73  :;:   DATE CREATED:22/12/08
+         LE tune for the collaboration meeting in Nov. 2008 by Byeongsu.
+         CVS final, take over to subversion
+
+VERSION 5-73  skdetsim-v5p73  :;:   DATE CREATED:14/12/08
+         LE tune for the collaboration meeting in Apr. 2008 by Byeongsu.
+
+VERSION 4-73  skdetsim-v4p73  :;:   DATE CREATED:18/01/08 ( tagged 17/12/08 )
+         New Tyvek reflectivity measurements from 2007 are incorporated in
+         the OD simulation.
+
+VERSION 4-72  skdetsim-v4p72  :;:   DATE CREATED:19/12/07
+         LE modify for adjusting SK-1 ledetsim. (not affect SK-2,3 and AP)
+         and also ledetsim-v1 is assigned, which is for LE final SK-1 and SK-2.
+
+VERSION 3-72  skdetsim-v3p72  :;:   DATE CREATED:27/11/07
+         LE tune for the collaboration meeting in Nov. 2007.
+
+VERSION 2-72  skdetsim-v2p72  :;:   DATE CREATED:21/10/07
+         AP tune for the collaboration meeting in Nov. 2007.
+
+VERSION 1-71  skdetsim-v1-71  :;:   DATE CREATED:11/09/07
+         New era starts from this version after confusing bugs for SK-III.
+         the version with the black sheet bugs.
+
+VERSION 7  skdetsim-v7  :;:   DATE CREATED:11/04/06
+         skdetsim-v7 is the version used for lowe analysis of final SK-II.
+
+VERSION 6  skdetsim-v6  :;:   DATE CREATED:21/04/05  
+skam version  sk04a     :;:   DATE CREATED:21/04/05  
+         skdetsim-v6 is the version used for atmpd analysis of JUN04 
+         collaboration meeting.
+
+VERSION 5  skdetsim-v5  :;:   DATE CREATED:16/06/04
+
+22/03/04 muon vector file and related are updated(Shiozawa).
+         changes only in stopmu calibration programs.
+05/12/03 minor change by delmonte...
+
+VERSION 4  skdetsim-v4  :;:   DATE CREATED:05/11/03
+skam version  sk03d     :;:   DATE CREATED:05/11/03
+
+04/11/03 The maximum point of QE table is changed only for AP
+02/11/03 (tune) Apply for current Parker's water parameter for LE
+31/10/03 Easy correction for edge tube problem (descrive 10/07/03)
+31/10/03 Apply new QE table instead of Nambu gain table
+31/10/03 (tune) Saturation point is updated for dshigh.F
+10/07/03 Found Edge tube problem         SERIOUS PROBLEM and not fixed
+04/07/03 Report and set random number seeds
+02/07/03 Fix Yoo, Ishihara and Seo tunings
+         LINAC code fixed and functional near this time
+12/06/03 Fix fatal bug fix for LOWE dark noise    dsnois.F
+07/06/03 Ishihara tune black sheet refl. and Rayleigh scatt. (LE_TUNE SK-II)
+27/05/03 FADC bank format to match observed data
+20/05/03 Change COREPMT for LE_TUNE 	(SK-II)
+19/05/03 Yoo tune LE_TUNE SK-II with SK-I data
+18/05/03 Nambu Gain table apply to LE_TUNE
+17/05/03 Correct dark noise for LINAC		 dscard.F
+
+VERSION 3  skdetsim-v3  :;:   DATE CREATED:12/05/03
+
+11/05/03 Seo study set ARAS and AMIS 	(AP_TUNE and SK-II)
+11/05/03 LINAC code added 		problems found later	
+29/04/03 Write Geometry info. to MCHEAD bank for ZBS vector file input
+
+VERSION 2  skdetsim-v2  :;:   DATE CREATED:24/04/03
+skam version  sk03c     :;:   DATE CREATED:24/04/03
+
+23/04/03 Recover APMCVER bank
+21/04/03 Increase AP_TUNE SK-II Ckov phonts by 20% for Nambu Gain Table
+21/04/03 Nambu Gain table apply to AP_TUNE
+21/04/03 Recover previous 1pe and pc2pe
+17/04/03 New single p.e. distribution and ATM threshold  (Ni+Cf data)
+
+VERSION 1  skdetsim-v1  :;:   DATE CREATED:11/04/03
+skam version  sk03b     :;:   DATE CREATED:11/04/03
+	Previous history not collected, see cvs log and sk2mc emails
+
+
+****************************************************************************
+*	version_history
+*
+*	Purpose:Provide a quick summary of changes by version.  Part
+*	of the maintnence of skdetsim.  Periodic and frequent versions
+*	should be checked by sk2mc expert and flagged.  Summary of recent 
+*	activity is placed here.
+*		
+*	Note: Prior to 7/2003 summary is based on cvs log files
+*
+*	Creation and Modification dates:
+*	2003.7.14 : C.Sterner first history
+*
+****************************************************************************

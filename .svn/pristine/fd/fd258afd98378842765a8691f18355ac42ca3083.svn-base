@@ -1,0 +1,41 @@
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C	How to move the black sheet position
+C       2003.04 Sterner
+C	skdetsim version 1.0
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
+	The black sheet was moved inwards 6.07 from the SK-I position for SK-II.  This was done because we installed the FRP/acrylic case.  To study removing the acrylic covers, you might want to also move the black sheet back to it's old position.  This movement was modeled in skdetsim, but several tuning groups want to move the black sheet around to study it's impact.  This movement is relatively easy, but there are some tricky points.  Let me first detail how to move the black sheet, then I will discuss what the changes do.
+
+in guskge.h:
+	set ZBLST=0.0
+in sgholebst.F:
+	set HOLE_IN_BLACKSHEET = 0.0 or some correct number
+in gustep.F:
+	replace all calls of sgacredge() and sggapedge() with sgbst.
+
+	The level of the black sheet is defined by one number in skdetsim; ZBLST in guskge.h.  For SK-II ZBLST=6.07cm.  For SK-I this number is ignored.  Setting ZBLST=0.0 will move the black sheet to the old level.  
+	However, several special routines where written because we move the black sheet inwards.  Please read /doc/remove_acrylic and sgholebst, sgacredge, sggapedge for more details.  If the black sheet is at 0.0cm then these routines are not needed.  sgacredge and sggapedge are easily replaced by sgbst (the routine the treates photons hitting the black sheet).  If position other than 6.07 or 0.0 cm is wanted then these routines will still be needed.  These routines may need further modification in this case.
+	The value HOLE_IN_BLACKSHEET is used because the hole which was cut in the black sheet was actually a bit larger than the acrylic cover.  This value might be important if you wish to study the effect of the hole diameter, or wish to set the black sheet at a level other than 6.07 or 0.0.  
+
+CSimple picture
+C                            _____________________________
+C                           /
+C                          /         ____________________
+C                         /         /    WATER GAP
+C               ID       /  ACR    /         ___________
+C                       /         /         /
+C                      /         /         /   PMT
+C                     /         /         /
+C         __ ________/_________/_________/
+C       bst   | hole/  acredge/  gapedge/
+C                  /         /         /
+C                 ----------/         /
+C            flange bottom           /
+C                                   /
+C            - - - - - - - - - - - -
+C               old bst level
+C
+
+
+

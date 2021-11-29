@@ -1,0 +1,6 @@
+Makefile
+*~
+validation*.dat
+validation*.txt
+validation*.zbs
+validation

@@ -1,0 +1,38 @@
+Release note for SKDETSIM ver.11.79
+December 30th, 2009 written by Jun Kameda for SKDETSIM group.
+
+ We updated SKDETSIM, and version number is updated to 11.79 .
+ 
+ A. What is updated.
+
+ The major modification after last version v10.78 
+ (released 2009 Sept.) are as follows:
+
+ (1) Timing resolution for SK-IV is implemented. (Heng Yang)
+     SKDETSIM Ver10.78 used too much better resolution.
+     It is re-estimated and implemented in SKDETSIM.
+
+ (2) Bug fix in Z-dependent absorption coefficient.
+     Same Z-dependent water parameters are accidentally used in Outer Detector.
+     Now OD has no Z-dependence.
+
+ (3) OD simulation is updated.
+
+ (4) Example card files are updated.
+
+     Example card files, sk4_odtune.card and le_sk4_example.card are updated
+     according to OD part.
+
+ B. How to get SKDETSIM
+
+    A command below:
+
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/tags/skdetsim-v11p79 skdetsim
+   
+    If you want to get the development version:
+
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/trunk skdetsim
+
+ C. How to compile and use SKDETSIM
+
+    Same as before. Please see the skdetsim/doc/release_note .

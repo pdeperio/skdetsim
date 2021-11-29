@@ -1,0 +1,73 @@
+Release note for SKDETSIM ver.10.78 
+September 4th, 2009 written by Jun Kameda for SKDETSIM group.
+
+ We updated SKDETSIM, and version number is updated to 10.78 .
+ 
+ A. What is updated.
+
+ The major modification after last version v9.77 
+ (released 2009 June collaboration meeting) is as follows:
+
+ (1) Water coefficients are updated using laser injector data. (T.McLachlan)
+
+      The "water parameters" are implemented for every month from Oct.08 to Aug.09.
+      If you want to use a parameter set for specified month,
+      please add a line to card file like this:
+
+       DS-WATERP 200811
+     
+      This is for Nov.2008, for example. If you don't set, or you set not-supported
+      number, the water parameter will be set to that of Apr.2009.
+
+ (2) Z-dependent absorption coefficient is implemented. (T.Yokozawa)
+
+      The Z dependence of the absorption coefficient is obtained
+      from Ni data in Apr.2009. If user want to include this effect, please add
+      two lines to card file as follows:
+
+       DS-MTBA 1
+       DS-TBA 10.03
+
+      The number "10.03" is a tuned number for SK-IV.
+
+ (3) Timing resolution for SK-IV is implemented. (Heng Yang)
+
+ (4) Tuning of the Black-sheet using direct measurement data (J.Kameda).   
+
+      The black-sheet model used in SK-III LE_TUNE was too shiny, and
+      tuned using direct measured data in SK-III.
+     
+ (5) Automatic changes of the tracking method from 3 to 4 
+     for over 1TeV neutrinos                    (J.Kameda)
+
+      To avoid a crash of the SKDETSIM due to a shortage of the memory,
+      SKDETSIM can automatically change the photon-tracking mode to
+      memory-saving mode (TRACK_PHOTON = 4). 
+      Currently, this function works only if user selects TRACK_PHOTON=3 originally.
+
+      If user want to enable this function, please add a line to card file:
+
+       SKCNTL-TRACKAUTOSW 1
+
+      After generating 1TeV neutrino event with TRACK_PHOTON=4, it will 
+      automatically go back to original TRACK_PHOTON mode.
+
+ (6) Example card files are updated.
+
+     Example card files, sk4_odtune.card and le_sk4_example.card are updated.
+     They included the parameters above. (TRACKAUTOSW is only in sk4_odtune.card).
+
+
+ B. How to get SKDETSIM
+
+    A command below:
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/tags/skdetsim-v10p78 skdetsim
+   
+    If you want to get the development version:
+
+  svn co https://kmcvs.icrr.u-tokyo.ac.jp/svn/rep/skdetsim/trunk skdetsim
+
+ C. How to use
+
+    Same as before. Please see the skdetsim/doc/release_note .
+

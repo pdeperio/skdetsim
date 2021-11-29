@@ -1,0 +1,65 @@
+C. Regis (2010/Nov)
+
+
+This document summarizes the mdifications made to SKdetsim to implement KL->KS regeneration 
+used for the p->muK0 search. (see note below)
+
+
+klksregen.inc (newly added)
+	common block for klks regeneration. This file is where KLKSLIFE_H20 is set by the
+	user and where regeneration can be enabled by setting KLKSENABLE.
+
+gutrak.F
+	at the beginning of the track determine the lifetime for klks regeneration (KLKSLIF)
+
+gtneut.F (newly added)
+	copied from /usr/local/cern/2005/src/geant321/gtrak and modified. Added regeneration
+	in same way that decay is treated. (see detail below)
+
+klksregen.F (newly added)
+	called when regeneration occurs. Stops tracking of the KL and creates the new KS 
+	daughter particle with same momentum and direction. 
+
+gustep.F
+	allow truth information from mechanism code 42 (KL->KS regeneration) to be 
+	written to the output bank.
+
+GNUMakefile
+	added gtneut.o and klksregen.o
+
+
+
+
+
+----------------------------------- 
+Note regarding KL->KS regeneration: 
+----------------------------------- 
+
+Regeneration in GEANT (SKDETSIM) 
+ 
+        KL->KS regeneration is off by default in the SKDETSIM. 
+        KL->KS is treated as a decay mode of the KL. I copied the same code 
+        GEANT uses to handle particle decay and used this for KLKS regeneration. 
+        The decay lifetime, KLKSLIFE_H20=120E-7 (seconds), is an adjustable parameter. 
+         
+        At the beginning of each particle track, the lifetime of regeneration for  
+        that track, KLKS_LIF, is determined as: 
+                KLKS_LIF = -CLIGHT*KLKSLIFE_H20*LOG(RNDM(1)) 
+        where CLIGHT is the speed of light, RDNM(1) is a random number between 0 and 1.  
+        This is done in gutrack.F.               
+ 
+        At each step in the tracking of the particle, regeneration is considered for KL in  
+        gtneut.F. The regeneration length, KLKSREGL is calculated: 
+                KLKSREGL = KLKSLIF*VECT(7)/AMASS 
+        Where VECT(7) is the momentum of the KL and AMASS is the mass. If this length is less  
+        than the current distance tracked then regeneration occurs. If regeneration occurs then 
+        the KL particle type is changed to KS but the other kinematics remain the same  
+        (mom, dir etc...). The regeneration mechanism flag is set, IPROC=42. 
+ 
+        To determine the value of KLKSLIFE_H20=120E-7 (seconds), I used 100% KL as  
+        input to the SKDETSIM and changed the lifetime parameter, KLKSLIFE_H20, until  
+        the fraction of output events with KL->KS regeneration was 0.1% 
+        [Nuclear Instruments and Methods in Physics Research A 350 (1994) 144-149]. 
+ 
+=========================================================== 
+

@@ -1,0 +1,67 @@
+
+This is a note for generating ATMPD Monte Carlo data using skdetsim.
+
+                                                    Sep. 20 2007
+                                                    Feb. 15 2013 rev
+         
+                                                    K. Okumura
+
+ 1)  Compile skdetsim binary
+     
+      detail procedure for compiling is written in "release_note" file
+      located in the same directory, "skdetsim/doc".
+
+      Note: since skdetsim for atm. nu consume memory much, you should compile 
+      binary with "HIGH" option. Also it should run on "atmpd" queue, where 
+      memory limit is loose.
+
+
+ 2)  Check skdetsim.card
+
+      official skdetsim card for atmpd is :
+
+           SK-I      sk1_odtune.card
+           SK-II     sk2_odtune.card
+           SK-III    sk3_odtune.card
+           SK-IV     sk4_odtune.card
+
+      if you want to generate events from vector file, check 
+      'VECT-FILE' configuration in card file. it should be "0".
+
+
+ 3)  Specify subrun number 
+
+       set subrun number of MC data in skdetsim.sh. subrun number can be 
+      set by :
+
+       >  setenv MC_SUBNUM 0
+
+       this is needed because bad channel of MC data depends on the subrun 
+      number. there are ten patterns and badch are set when skread is called.
+      the choise of pattern is determined by (subrun#)%10. so in order to 
+      generate all patterns equally, you have to generate MC for number 
+      of files multiplied by ten. 
+
+       at the same time, when you read MC data, 26 and 27 should be 
+      included in the argument of "skopt" subroutine. 
+
+         27 : set bad channel for atmpd MC  
+         26 : set bad channel for data
+  
+
+ 4)  Run skdetsim
+
+      ./skdetsim_high.sh [card name] [output file] [input file] 
+
+
+o Version history (SK4)
+
+   Ver. Rev      Date          Comment
+   ----------------------------------------------------------------------------------------
+   8.3  r18848   2013-02-15    reflection tuning add by Tarek, photonuclear effect by Hiro, 
+                               store more detailed final state vector by Patrick
+   8.2  r14543   2010-04-28    implement new nuclear effect by Patrick
+
+   See "skmkmcver.F" for skdetsim and apdslibver version .
+
+

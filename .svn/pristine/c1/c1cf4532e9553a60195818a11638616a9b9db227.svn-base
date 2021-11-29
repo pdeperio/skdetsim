@@ -1,0 +1,380 @@
+
+*** Please note that this document is obsolute. ****
+
+
+===============================================================================
+/  
+/  # SKDETSIM-GEANT4 : 
+/   + Read GEANT4 for neutron interactions. 
+/   + Implement Gd model and neutron-Gd interactions. 
+/   + This is based on Ka Ming's Gd code. 
+/  
+/  # Version history : 
+/   + [0.0] 10th, October, 2018  by Y. Ashida (Kyoto University)
+/   + [1.0] 2nd,  July,    2020  by M.Harada (Okayama University)
+/   + [1.1] 6th,  August,    2020  by Ka Ming (Liverpool)
+/   + [1.2] 26th,  August,    2020  by M.Harada (Okayama University)
+/   + 
+/
+/
+================================================================================
+
+================================================================================
+  ### Descriptions on modifications <Ver0.0>
+================================================================================
+
+  # General information 
+ -------------------------------------------------------------------------------
+
+  This code is made for neutron-water simulation based on GEANT4. 
+  Original version of SKDETSIM uses GCALOR/FLUKA/GHEISHA for all the hadronic
+  simulations including neutrons. 
+  Development is done by modifying the code originally made for neutron-Gd 
+  simulation by Ka Ming (ICRR).
+  
+  Use default library files instead of ones just for Gd : 
+   - include/G4NeutronHPorLCapture.hh
+   - include/G4NeutronHPorLElastic.hh
+   - include/G4NeutronHPorLEInelastic.hh
+   - src/G4NeutronHPorLCapture.cc
+   - src/G4NeutronHPorLElastic.cc
+   - src/G4NeutronHPorLEInelastic.cc
+
+  1. for Gd setting : 
+   (I)  Set 'GD_WTR = 1' in cntlcard.F. <-- not necessary if you use SKCNTL-GDWTR
+   (II) Set 'SKCNTL-USEG4 = 1' in the card file. 
+   (III)Set Gd2(SO4)3*15H20 concentration to 'SKCNTL-GDCONC ' in the card file. 
+   (IV) Set 'SKCNTL-GDWTR = 1' in the card file. 
+   (V) Set 'SKCNTL-GDMODEL = n' in the card file. 
+   *IN (V), we can select Gd(n,gamma) model
+      0 : Geant4 Default model.
+      1 : GLG4Sim model.
+      2 : ggarnet model.
+      3 : ANNRI_Gd model.
+   In pure water simulation(using G4), (III)-(IV) should be set to 0.
+   In pure water simulation(using G3), (II)-(IV) should be set to 0.
+  
+  2. To compile : 
+   % source /usr/local/sklib_gcc4.8.5/cshenv_gcc4.8.5_skofl_16c+atmpd_16c
+   # this points to NEUT5.3.6, but I think we need 5.4 now
+   # I use this instead: source /usr/local/sklib_gcc4.8.5/cshenv_gcc4.8.5_skofl_19b+atmpd_19b
+   % setenv NEUTRON 1
+   % ./make.csh
+  
+  3. Run : 
+   % ./run.sh 
+
+
+  # grun.F
+ -------------------------------------------------------------------------------
+  
+  * Remove the condition for initializing/finalizing GEANT4 : 
+   / IF (GD_WTR==1) CALL g4_initialize --> CALL g4_initialize 
+   / IF (GD_WTR==1) CALL g4_finalize --> CALL g4_finalize
+  Make the initialization/finalization of GEANT4 always be done regardless of GD_WTR. 
+
+
+  # gtneut.F 
+ -------------------------------------------------------------------------------
+  
+  * Add new parameters : 
+   / REAL*8 wtrXsec
+   / REAL*8 HelaXsec, HelaXsec, HinelaXsec 
+   / REAL*8 OcapXsec, OelaXsec, OinelaXsec
+   / wtrXsec = HcapXsec+HelaXsec+HinelaXsec+OcapXsec+OelaXsec+OinelaXsec+g3Sig
+   HelaXsec, HelaXsec, HinelaXsec : 
+     neutron-H capture/elastic/inelastic cross section taken from GEANT4
+   OelaXsec, OelaXsec, OinelaXsec : 
+     neutron-O capture/elastic/inelastic cross section taken from GEANT4
+   g3Sig : 
+     cross section of hadrons other than neutron and charged pions taken from GEANT3
+  
+  * Change parameter name : 
+   / REAL*8 capXsec --> REAL*8 GdcapXsec 
+   / REAL*8 elaXsec --> REAL*8 GdelaXsec
+   / REAL*8 inelaXsec --> REAL*8 GdinelaXsec
+
+  * Get random number used for determining the interaction type : 
+   / CALL g4_getrndm(aRndm)
+
+  * Initialize all the cross sections before loading : 
+   / HcapXsec = 0
+   / HelaXsec = 0
+   / HinelaXsec = 0
+   / OcapXsec = 0
+   / OelaXsec = 0
+   / OinelaXsec = 0
+   / GdcapXsec = 0
+   / GdelaXsec = 0
+   / GdinelaXsec = 0
+   / g3Sig = 0
+
+  * Call GEANT4 to get neutron-H/O cross sections : 
+   / IF (IPART.EQ.13) THEN
+   /    CALL g4_gethxsec(GEKIN,HcapXsec,HelaXsec,HinelaXsec)
+   /    CALL g4_getoxsec(GEKIN,OcapXsec,OelaXsec,OinelaXsec)
+   /    SHADR = ZINTHA/(HcapXsec+HelaXsec+HinelaXsec+OcapXsec+OelaXsec+OinelaXsec) 
+   / ELSE
+   /    CALL GUPHAD 
+   / ENDIF
+  Here new functions defined in src/subCPP.cc is called if the particle is 
+  neutron (particle ID = 13). 
+  If the particle is not neutron, GUPHAD is called, then leading to GCALOR or NEUT.  
+
+  * Determine the interaction type based on random number : 
+   / IF (IPROC.EQ.12) THEN
+   /   processNumber = 0
+   /   if ((wtrXsec.gt.0).AND.(needGd.eqv..false.)) then
+   /     totXsec = wtrXsec
+   /     if (g3Sig/totXsec.gt.aRndm) then
+   /       processNumber = 0
+   /     else if ((g3Sig+HcapXsec+OcapXsec)/totXsec.gt.aRndm) then
+   /       processNumber = 10
+   /     else if ((g3Sig+HcapXsec+OcapXsec+HelaXsec+OelaXsec)/totXsec.gt.aRndm) then
+   /       processNumber = 11
+   /     else
+   /       processNumber = 12
+   /     endif
+   /   else if ((wtrXsec.gt.0).AND.(needGd.eqv..true.)) then
+   /     totXsec = wtrXsec+GdcapXsec+GdelaXsec+GdinelaXsec 
+   /     if (g3Sig/totXsec.gt.aRndm) then
+   /       processNumber = 0
+   /     else if ((g3Sig+HcapXsec+OcapXsec+GdcapXsec)/totXsec.gt.aRndm) then
+   /       processNumber = 20
+   /     else if ((g3Sig+HcapXsec+OcapXsec+GdcapXsec+HelaXsec+OelaXsec+GdelaXsec)/totXsec.gt.aRndm) then 
+   /       processNumber = 21
+   /     else
+   /       processNumber = 22
+   /     endif
+   /   endif
+   /
+   /   if (processNumber.gt.0) then 
+   /     DO ITER=1,250
+   /       DO ITER2=1,9
+   /         secVec(ITER2,ITER)=0
+   /       ENDDO
+   /     ENDDO
+   /     CALL g4_run(VECT(1),VECT(2),VECT(3),
+   /    +    VECT(4)*VECT(7),VECT(5)*VECT(7),VECT(6)*VECT(7),secVec,processNumber)
+   /     GO TO 590
+   /   endif
+   /
+   /   CALL GUHADR
+   /
+   /   ...
+  First, if hadronic interaction is selected (IPROC = 12), 
+  determine interaction with water or Gd water based on needGd. 
+  Second, determine whether neutron interaction or not. 
+  Third, if neutron interaction happens (processNumber > 0), 
+  call g4_run() to get detailed interaction information (secondary particles). 
+
+
+  # src/subCPP.cc 
+ -------------------------------------------------------------------------------
+  
+  * Add new functions and modify the existing function : 
+   / void g4_getrndm_( double& );
+   / void g4_gethxsec_( float&, double&, double&, double& );
+   / void g4_getoxsec_( float&, double&, double&, double& );
+   /
+   / void g4_getgdxsec_( float&, double&, double&, double&, double& );
+   /  --> void g4_getgdxsec_( float&, double&, double&, double& );
+  g4_getrndm() : for getting a random number following the uniform distribution
+  g4_gethxsec() & g4_getoxsec() : for getting neutron-H/O cross sections
+  g4_getgdxsec() : input (aRndm) for a random number is reduced. 
+   /
+   / void g4_getrndm_( double& aRndm ) {
+   /   aRndm = G4UniformRand();
+   / }
+   /
+   / void g4_gethxsec_( float& nEnergy, double& capXsec, double& elaXsec, double& inelaXsec ) {
+   /   capXsec = testUI->GetHCapXsec(nEnergy);
+   /   elaXsec = testUI->GetHElaXsec(nEnergy);
+   /   inelaXsec = testUI->GetHInElaXsec(nEnergy);
+   / }
+   /
+   / void g4_getoxsec_( float& nEnergy, double& capXsec, double& elaXsec, double& inelaXsec ) {
+   /   capXsec = testUI->GetOCapXsec(nEnergy);
+   /   elaXsec = testUI->GetOElaXsec(nEnergy);
+   /   inelaXsec = testUI->GetOInElaXsec(nEnergy);
+   / }
+   /
+   / void g4_getgdxsec_( float& nEnergy, double& capXsec, double& elaXsec, double& inelaXsec ) {
+   /   capXsec = testUI->GetGdCapXsec(nEnergy);
+   /   elaXsec = testUI->GetGdElaXsec(nEnergy);
+   /   inelaXsec = testUI->GetGdInElaXsec(nEnergy);
+   / }
+
+
+  # include/userInterface2.hh
+ -------------------------------------------------------------------------------
+  
+  * Add new functions : 
+   / G4double GetHCapXsec(G4double nEnergy);
+   / G4double GetHElaXsec(G4double nEnergy);
+   / G4double GetHInElaXsec(G4double nEnergy);
+   / G4double GetOCapXsec(G4double nEnergy);
+   / G4double GetOElaXsec(G4double nEnergy);
+   / G4double GetOInElaXsec(G4double nEnergy);
+   / G4double GetGdCapXsec(G4double nEnergy);
+   / G4double GetGdElaXsec(G4double nEnergy);
+   / G4double GetGdInElaXsec(G4double nEnergy);
+
+  * Switch loading libraries : 
+   / myG4NeutronHPorLCapture --> G4NeutronHPorLCapture
+   / myG4NeutronHPorLElastic --> G4NeutronHPorLElastic
+   / myG4NeutronHPorLEInelastic --> G4NeutronHPorLEInelastic
+  my~ load just Gd cross sections for speed-up.  
+
+
+  # src/userInterface2.cc
+ -------------------------------------------------------------------------------
+  
+  * Add new functions : 
+   /
+   / G4double userInterface2::GetHCapXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return capProcessXsecDataStore->GetCrossSection(neutronParticle,H,Water)/(1/cm)*(2/3);
+   / }
+   / G4double userInterface2::GetHElaXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return elaProcessXsecDataStore->GetCrossSection(neutronParticle,H,Water)/(1/cm)*(2/3);
+   / }
+   / G4double userInterface2::GetHInElaXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return inelaProcessXsecDataStore->GetCrossSection(neutronParticle,H,Water)/(1/cm)*(2/3);
+   / }
+   /
+   / G4double userInterface2::GetOCapXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return capProcessXsecDataStore->GetCrossSection(neutronParticle,O,Water)/(1/cm)*(2/3);
+   / }
+   / G4double userInterface2::GetOElaXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return elaProcessXsecDataStore->GetCrossSection(neutronParticle,O,Water)/(1/cm)*(2/3);
+   / }
+   / G4double userInterface2::GetOInElaXsec(G4double nEnergy) 
+   / {
+   /   neutronParticle->SetKineticEnergy(nEnergy*GeV);
+   /   return inelaProcessXsecDataStore->GetCrossSection(neutronParticle,O,Water)/(1/cm)*(2/3);
+   / }
+
+  * Switch loading libraries : 
+   / myG4NeutronHPorLCapture --> G4NeutronHPorLCapture
+   / myG4NeutronHPorLElastic --> G4NeutronHPorLElastic
+   / myG4NeutronHPorLEInelastic --> G4NeutronHPorLEInelastic
+  my~ load just Gd cross sections for speed-up.  
+   
+  * Add new processes in Get2nd() function : 
+   / 
+   / if ( process == 10 )
+   /   anElement = capProcessXsecDataStore->SampleZandA( neutronParticle, Water, targetNucleus );
+   / else if ( process == 11 )
+   /   anElement = elaProcessXsecDataStore->SampleZandA( neutronParticle, Water, targetNucleus );
+   / else if ( process == 12 )
+   /   anElement = inelaProcessXsecDataStore->SampleZandA( neutronParticle, Water, targetNucleus );
+   / if ( process == 20 )
+   /   anElement = capProcessXsecDataStore->SampleZandA( neutronParticle, GdWater, targetNucleus );
+   / else if ( process == 21 )
+   /   anElement = elaProcessXsecDataStore->SampleZandA( neutronParticle, GdWater, targetNucleus );
+   / else if ( process == 22 )
+   /   anElement = inelaProcessXsecDataStore->SampleZandA( neutronParticle, GdWater, targetNucleus );
+   /
+   / if ( process == 10 )
+   /   result = theLENeutronCaptureModel->ApplyYourself( thePro, targetNucleus );
+   / else if ( process == 11 )
+   /   result = theElasticNeutron->ApplyYourself( thePro, targetNucleus );
+   / else if ( process == 12 )
+   /   result = theInelasticModel->ApplyYourself( thePro, targetNucleus );
+   / if ( process == 20 )
+   /   result = theLENeutronCaptureModel->ApplyYourself( thePro, targetNucleus );
+   / else if ( process == 21 )
+   /   result = theElasticNeutron->ApplyYourself( thePro, targetNucleus );
+   / else if ( process == 22 )
+   /   result = theInelasticModel->ApplyYourself( thePro, targetNucleus );
+   /
+  processNumber is determined in gtneut.F and the detailed interaction 
+  is selected based on its value.
+
+
+================================================================================
+  ### Descriptions on modifications <Ver0.1>
+================================================================================
+
+  # src/userInterface2.cc
+ -------------------------------------------------------------------------------
+
+  * Add nHAtomsPerVolume, nOAtomsPerVolume, and their rate to the total amount. 
+  * Use parameters above when cross sections are read. 
+  * Found that X should be Water (GdWater) for pure (Gd) water simulation 
+    in aStepPoint->SetMaterial( X ).  
+  * Add the unit normalization for neutron energy. 
+   / (before) secVec.totalEnergy = newP4.e(); 
+   / (after)  secVec.totalEnergy = newP4.e()/GeV; 
+    Without this correction, the output neutron energy value is not consistent 
+    with its unit. 
+
+
+================================================================================
+  ### Descriptions on modifications <Ver1.0>
+================================================================================
+
+  # src/userInterface2.cc
+ -------------------------------------------------------------------------------
+
+  * Add the Gd_water Gd_concentration variable to input for 
+	  userInterface2 class constructor.
+		->User can choose Material in G4Step by Card file.
+
+
+  # src/subCPP.cc
+ -------------------------------------------------------------------------------
+
+  * Add the Gd_water Gd_concentration variable to input for 
+	  g4_initialize function.
+
+
+  # gtneut.F
+ -------------------------------------------------------------------------------
+
+  * Add USEG4 Flag to needGd Flag selection and calculation of g4_Xsec part 
+		If user choose USEG4 = 0, cross-sections of neutron interaction are calculated 
+		by nominal Geant3 function.
+		If use choose USEG4 =1 but GDWTR=0, pure-water simulation of GEANT4 is called
+		for neutron. 
+
+
+  # cntlcard.F
+ -------------------------------------------------------------------------------
+
+  * Add USEG4 Flag, GDCONC selection for FFKEY.
+
+================================================================================
+  ### Descriptions on modifications <Ver1.1>
+================================================================================
+ ** Geant4 version was updated from 4.9.6 to 4.10.03
+
+
+================================================================================
+  ### Descriptions on modifications <Ver1.2>
+================================================================================
+
+  # cntlcard.F
+ -------------------------------------------------------------------------------
+  * Add GDMODEL Flag.
+  
+
+  # ANNRI_Gd/
+ -------------------------------------------------------------------------------
+  * Add latest Okayama ANNRI_Gd model
+  
+
+  # GdNeutronHPCaptureFS.cc
+ -------------------------------------------------------------------------------
+  * Add the switch of 4 Gd(n,gamma) models.
+  

@@ -1,0 +1,12 @@
+(1) it 'ZFATAL' happens,
+
+    try to enlarge the array size of kzlimit and/or gzebra,
+
+    kzlimit:
+      sginit.F
+      PARAMETER (NPSTOREX=1000000)
+                          ~~~~~~~
+    gzebra:
+      gcbank.h
+      PARAMETER (KWBANK=3000000,KWWORK=5200)
+                        ~~~~~~~
